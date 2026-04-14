@@ -14,7 +14,7 @@ for script in "$SCRIPT_DIR"/*.sh; do
     cp "$script" "$INSTALL_DIR/$name"
     chmod +x "$INSTALL_DIR/$name"
     echo "Installed: $INSTALL_DIR/$name"
-    ((installed++))
+    installed=$((installed + 1))
 done
 
 echo "Done. $installed script(s) installed to $INSTALL_DIR."
