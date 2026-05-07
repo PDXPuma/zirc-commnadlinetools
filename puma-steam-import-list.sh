@@ -3,12 +3,23 @@
 set -euo pipefail
 
 INPUT_FILE="$HOME/Documents/steam-games-list.txt"
-FLATPAK_CMD="flatpak run com.valvesoftware.Steam -steamcmd"
 
 die() { echo "Error: $1" >&2; exit 1; }
 
+# Detect Steam installation type
+if flatpak list --columns=application 2>/dev/null | grep -q com.valvesoftware.Steam; then
+    STEAM_TYPE="flatpak"
+    FLATPAK_CMD="flatpak run com.valvesoftware.Steam -steamcmd"
+elif command -v steam >/dev/null 2>&1 || [[ -d "$HOME/.local/share/Steam" ]]; then
+    STEAM_TYPE="native"
+    FLATPAK_CMD="steam -steamcmd"
+else
+    die "No Steam installation found (flatpak or native)"
+fi
+
+echo "Detected Steam: $STEAM_TYPE"
+
 [[ -f "$INPUT_FILE" ]] || die "Steam games list not found: $INPUT_FILE"
-command -v flatpak >/dev/null 2>&1 || die "flatpak is not installed"
 
 read -rp "Steam username: " username
 read -rsp "Steam password: " password

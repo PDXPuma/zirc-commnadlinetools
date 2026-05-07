@@ -1,21 +1,40 @@
 #!/usr/bin/env bash
-# puma-steam-import.sh — Import Steam flatpak game desktop entries and icons
+# puma-steam-import.sh — Import Steam game desktop entries and icons
 # into ~/.local/share/applications and ~/.local/share/icons
 set -euo pipefail
 
-STEAM_FLATPAK="$HOME/.var/app/com.valvesoftware.Steam"
-SRC_APPS="$STEAM_FLATPAK/data/applications"
-SRC_ICONS="$STEAM_FLATPAK/data/icons/hicolor"
+die() { echo "Error: $1" >&2; exit 1; }
+
+# Detect Steam installation type
+if flatpak list --columns=application 2>/dev/null | grep -q com.valvesoftware.Steam; then
+    STEAM_TYPE="flatpak"
+    STEAM_FLATPAK="$HOME/.var/app/com.valvesoftware.Steam"
+    SRC_APPS="$STEAM_FLATPAK/data/applications"
+    SRC_ICONS="$STEAM_FLATPAK/data/icons/hicolor"
+elif [[ -d "$HOME/.local/share/Steam" ]] || command -v steam >/dev/null 2>&1; then
+    STEAM_TYPE="native"
+    STEAM_DIR="$HOME/.local/share/Steam"
+    SRC_APPS="$STEAM_DIR/data/applications"
+    SRC_ICONS="$STEAM_DIR/data/icons/hicolor"
+else
+    die "No Steam installation found (flatpak or native)"
+fi
 
 DEST_APPS="$HOME/.local/share/applications"
 DEST_ICONS="$HOME/.local/share/icons/hicolor"
 
-FLATPAK_CMD="flatpak run com.valvesoftware.Steam"
+echo "Detected Steam: $STEAM_TYPE"
 
-die() { echo "Error: $1" >&2; exit 1; }
+if [[ "$STEAM_TYPE" == "native" ]]; then
+    echo "Native Steam integrates desktop entries and icons automatically."
+    echo "No import needed. Exiting."
+    exit 0
+fi
 
 [[ -d "$SRC_APPS" ]]   || die "Steam flatpak applications dir not found: $SRC_APPS"
 [[ -d "$SRC_ICONS" ]]  || die "Steam flatpak icons dir not found: $SRC_ICONS"
+
+FLATPAK_CMD="flatpak run com.valvesoftware.Steam"
 
 mkdir -p "$DEST_APPS" "$DEST_ICONS"
 
