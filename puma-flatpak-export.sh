@@ -10,11 +10,11 @@ command -v flatpak >/dev/null 2>&1 || die "flatpak is not installed"
 
 mkdir -p "$HOME/Documents"
 
-flatpak list --columns=application,type | grep -E '\t(app|addon)$' | cut -f1 | sort > "$OUTPUT_FILE"
+flatpak list --app --columns=application | sort > "$OUTPUT_FILE"
 
 count=$(wc -l < "$OUTPUT_FILE")
 
-echo "Exported $count flatpak app(s) and addon(s) to $OUTPUT_FILE"
+echo "Exported $count flatpak app(s) to $OUTPUT_FILE"
 echo ""
 echo "To reinstall on another machine:"
 echo "  flatpak install -y < $OUTPUT_FILE"
