@@ -2,6 +2,25 @@
 
 A collection of bash scripts for exporting and importing application configurations, game libraries, and desktop entries across Linux machines.
 
+## All-in-One Export/Import
+
+### `export-all.sh`
+
+Export brew, flatpak, and steam to `~/Documents/puma-backup/`. Runs the individual export scripts and collects all output files into a single directory you can copy to a new machine.
+
+```bash
+./export-all.sh
+```
+
+### `import-all.sh`
+
+Import brew, flatpak, and steam from `~/Documents/puma-backup/` (or a custom path). Installs desktop entries/icons for Steam and uses SteamCMD to download games (prompts for credentials).
+
+```bash
+./import-all.sh                          # uses ~/Documents/puma-backup/
+./import-all.sh /path/to/puma-backup     # uses custom path
+```
+
 ## Steam
 
 ### `puma-steam-export.sh`

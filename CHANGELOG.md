@@ -8,6 +8,8 @@
 - `puma-steam-import.sh` — Auto-detects flatpak or native Steam; exits early for native (integration is automatic)
 
 ### Added
+- `export-all.sh` — Export brew, flatpak, and steam to `~/Documents/puma-backup/` using existing individual scripts
+- `import-all.sh` — Import brew, flatpak, and steam from `~/Documents/puma-backup/` (or custom path) using existing individual scripts
 - `README.md` — Documentation for all scripts in the collection
 - `puma-flatpak-export.sh` — Export all installed flatpak apps and addons to `~/Documents/flatpak-list.txt`
 - `puma-steam-export.sh` — Export Steam game AppIDs to `~/Documents/steam-games-list.txt`
