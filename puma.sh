@@ -123,11 +123,41 @@ run_flatpak_export() {
 # ── Main Menu ─────────────────────────────────────────────────────────
 
 MENU_ITEMS=(
+    "── All ──"
+    "Export All"
+    "Import All"
+    ""
+    "── Create ──"
+    "Create TUI App"
+    "Create Web App"
+    ""
+    "── TUI Apps ──"
+    "Export TUI Apps"
+    "Import TUI Apps"
+    ""
+    "── Web Apps ──"
+    "Export Web Apps"
+    "Import Web Apps"
+    ""
+    "── Steam ──"
+    "Export Steam Games"
+    "Import Steam Games"
+    ""
+    "── Packages ──"
+    "Export Brew Packages"
+    "Export Flatpak Apps"
+    ""
+    "── Utilities ──"
+    "Check YouTube Live"
+    ""
+    "Exit"
+)
+
+ACTIONABLE_ITEMS=(
     "Export All"
     "Import All"
     "Create TUI App"
     "Create Web App"
-    "Check YouTube Live"
     "Export TUI Apps"
     "Import TUI Apps"
     "Export Web Apps"
@@ -136,22 +166,38 @@ MENU_ITEMS=(
     "Import Steam Games"
     "Export Brew Packages"
     "Export Flatpak Apps"
+    "Check YouTube Live"
     "Exit"
 )
+
+is_actionable() {
+    local item="$1"
+    for actionable in "${ACTIONABLE_ITEMS[@]}"; do
+        [[ "$item" == "$actionable" ]] && return 0
+    done
+    return 1
+}
 
 main_menu() {
     while true; do
         show_header
         local choice
         if $PUMA_HAS_GUM; then
-            choice="$(printf '%s\n' "${MENU_ITEMS[@]}" | gum filter \
-                --prompt "Select action: " \
-                --placeholder "Type to filter..." \
-                --height 15)"
+            while true; do
+                choice="$(printf '%s\n' "${MENU_ITEMS[@]}" | gum choose \
+                    --header "Select an action" \
+                    --cursor "→" \
+                    --cursor-prefix "" \
+                    --selected-prefix "✓ " \
+                    --height 20)"
+                [[ -z "$choice" ]] && { echo "Goodbye!"; exit 0; }
+                if is_actionable "$choice"; then
+                    break
+                fi
+            done
         else
-            choice="$(puma_choose --header "Select an action:" "${MENU_ITEMS[@]}")"
+            choice="$(puma_choose --header "Select an action:" "${ACTIONABLE_ITEMS[@]}")"
         fi
-        [[ -z "$choice" ]] && { echo "Goodbye!"; exit 0; }
 
         case "$choice" in
             "Export All") run_export_all ;;
