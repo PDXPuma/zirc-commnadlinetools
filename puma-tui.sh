@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # puma-tui.sh — Create a desktop entry that launches a TUI app in a terminal
-# Usage: puma-tui.sh <name> <command>
-
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/puma-lib.sh"
 
 APPS_DIR="$HOME/.local/share/applications"
 ICONS_DIR="$HOME/.local/share/icons"
@@ -27,21 +28,21 @@ CMD_BIN="$1"
 shift || true
 CMD_ARGS="$*"
 
-# Resolve the command binary to an absolute path
 CMD_BIN_PATH="$(command -v "$CMD_BIN" 2>/dev/null)" \
     || die "Command not found: $CMD_BIN"
 COMMAND="${CMD_BIN_PATH}${CMD_ARGS:+ $CMD_ARGS}"
 
-# Derive a safe identifier from the name (lowercase, spaces to hyphens)
 ID="$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd '[:alnum:]-')"
 
 ICON_PATH="$ICONS_DIR/${ID}.png"
 DESKTOP_PATH="$APPS_DIR/${ID}.desktop"
 
-# Prompt for icon URL
-read -rp "Icon URL (leave blank to use system terminal icon): " ICON_URL
+if [[ ! -t 0 ]]; then
+    read -r ICON_URL
+else
+    ICON_URL="$(puma_input "Icon URL (leave blank for default)" --placeholder "https://example.com/icon.png")"
+fi
 
-# Detect an available terminal emulator
 detect_terminal() {
     local terminals=(
         "kitty:kitty"
@@ -53,28 +54,46 @@ detect_terminal() {
         "konsole:konsole -e"
         "xfce4-terminal:xfce4-terminal -e"
     )
+    local available=()
+    local exec_map=()
     for entry in "${terminals[@]}"; do
         local bin="${entry%%:*}"
         local exec_prefix="${entry#*:}"
         if command -v "$bin" >/dev/null 2>&1; then
             local bin_path
             bin_path="$(command -v "$bin")"
-            echo "${exec_prefix/$bin/$bin_path}"
-            return
+            available+=("$bin")
+            exec_map+=("${exec_prefix/$bin/$bin_path}")
         fi
     done
-    die "No supported terminal emulator found. Install kitty, alacritty, foot, wezterm, or xterm."
+    if [[ ${#available[@]} -eq 0 ]]; then
+        die "No supported terminal emulator found. Install kitty, alacritty, foot, wezterm, or xterm."
+    fi
+    if [[ ${#available[@]} -gt 1 ]]; then
+        local chosen
+        chosen="$(puma_choose --header "Select terminal:" "${available[@]}")"
+        for i in "${!available[@]}"; do
+            if [[ "${available[$i]}" == "$chosen" ]]; then
+                echo "${exec_map[$i]}"
+                return
+            fi
+        done
+    fi
+    echo "${exec_map[0]}"
 }
 
 TERM_EXEC="$(detect_terminal)"
-echo "Using terminal: ${TERM_EXEC%% *}"
+puma_style "Using terminal: ${TERM_EXEC%% *}" --foreground cyan
 
 mkdir -p "$APPS_DIR" "$ICONS_DIR"
 
-# Handle icon
+if ! puma_confirm "Create desktop entry for '$NAME'?"; then
+    echo "Cancelled."
+    exit 0
+fi
+
 if [[ -n "$ICON_URL" ]]; then
-    echo "Fetching icon from: $ICON_URL"
-    curl -fsSL --max-time 10 -o "$ICON_PATH" "$ICON_URL" \
+    puma_spin "Fetching icon from: $ICON_URL" -- curl -fsSL --max-time 10 -o "$ICON_PATH" "$ICON_URL" \
         || die "Failed to download icon from '$ICON_URL'"
 
     file_type="$(file --brief --mime-type "$ICON_PATH" 2>/dev/null || true)"
@@ -83,13 +102,12 @@ if [[ -n "$ICON_URL" ]]; then
         die "Downloaded file does not appear to be an image (got: $file_type)"
     fi
 
-    echo "Icon saved to: $ICON_PATH"
+    puma_style "Icon saved to: $ICON_PATH" --foreground green
     ICON_VALUE="$ICON_PATH"
 else
     ICON_VALUE="utilities-terminal"
 fi
 
-# Write the .desktop file
 cat > "$DESKTOP_PATH" <<EOF
 [Desktop Entry]
 Version=1.0
@@ -104,5 +122,6 @@ EOF
 
 chmod +x "$DESKTOP_PATH"
 
-echo "Desktop entry saved to: $DESKTOP_PATH"
-echo "Done. '${NAME}' TUI app created."
+echo ""
+puma_style "Desktop entry saved to: $DESKTOP_PATH" --bold --foreground green
+puma_style "'$NAME' TUI app created." --bold --foreground green

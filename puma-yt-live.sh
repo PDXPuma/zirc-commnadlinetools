@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # yt-live.sh — Check if a YouTube channel is live; copy the link and open in mpv
-# Usage: yt-live.sh <username>
-
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/puma-lib.sh"
 
 usage() {
     echo "Usage: $(basename "$0") <username>"
@@ -16,33 +17,16 @@ usage() {
 
 die() { echo "Error: $1" >&2; exit 1; }
 
-[[ $# -lt 1 ]] && usage
-
 command -v yt-dlp  &>/dev/null || die "yt-dlp is not installed"
 command -v mpv     &>/dev/null || die "mpv is not installed"
 
-# Normalize handle: strip leading @ if present, then re-add it
-HANDLE="${1#@}"
-LIVE_URL="https://www.youtube.com/@${HANDLE}/live"
-
-echo "Checking if @${HANDLE} is live..."
-
-# Fetch the watch URL for the live stream (yt-dlp resolves /live → watch?v=...)
-# --no-playlist ensures we only grab the current live video, not a playlist.
-WATCH_URL="$(yt-dlp \
-    --no-playlist \
-    --no-warnings \
-    --print webpage_url \
-    "$LIVE_URL" 2>/dev/null)" || true
-
-if [[ -z "$WATCH_URL" ]]; then
-    echo "@${HANDLE} does not appear to be live right now."
-    exit 0
+if [[ $# -lt 1 ]]; then
+    HANDLE="$(puma_input "YouTube channel handle" --placeholder "@channel")"
+    [[ -z "$HANDLE" ]] && exit 0
+else
+    HANDLE="$1"
 fi
 
-echo "Live stream found: $WATCH_URL"
-
-# Copy to clipboard — prefer wl-copy (Wayland), fall back to xclip / xsel
 copy_to_clipboard() {
     local url="$1"
     if command -v wl-copy &>/dev/null; then
@@ -57,9 +41,32 @@ copy_to_clipboard() {
     fi
 }
 
-if copy_to_clipboard "$WATCH_URL"; then
-    echo "Link copied to clipboard."
+HANDLE="${HANDLE#@}"
+LIVE_URL="https://www.youtube.com/@${HANDLE}/live"
+
+puma_spin "Checking if @${HANDLE} is live..." -- yt-dlp \
+    --no-playlist \
+    --no-warnings \
+    --print webpage_url \
+    "$LIVE_URL" 2>/dev/null > /dev/null || true
+
+WATCH_URL="$(yt-dlp \
+    --no-playlist \
+    --no-warnings \
+    --print webpage_url \
+    "$LIVE_URL" 2>/dev/null)" || true
+
+if [[ -z "$WATCH_URL" ]]; then
+    puma_style "@${HANDLE} does not appear to be live right now." --foreground yellow
+    exit 0
 fi
 
-echo "Opening in mpv..."
-mpv "$WATCH_URL"
+puma_style "Live stream found: $WATCH_URL" --bold --foreground green
+
+if copy_to_clipboard "$WATCH_URL"; then
+    puma_style "Link copied to clipboard." --foreground green
+fi
+
+if puma_confirm "Open stream in mpv?"; then
+    mpv "$WATCH_URL"
+fi

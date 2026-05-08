@@ -2,11 +2,44 @@
 
 A collection of bash scripts for exporting and importing application configurations, game libraries, and desktop entries across Linux machines.
 
+Enhanced with [gum](https://github.com/charmbracelet/gum) for interactive TUI. All scripts work without gum installed — they gracefully fall back to plain text mode.
+
+## Quick Start
+
+```bash
+# Install all scripts
+./install.sh
+
+# Launch the interactive menu (requires gum for full experience)
+puma.sh
+```
+
+### Installing gum
+
+For the enhanced TUI experience, install gum:
+
+```bash
+# Arch Linux
+sudo pacman -S gum
+
+# Debian/Ubuntu
+sudo apt install gum
+
+# Fedora
+sudo dnf install gum
+
+# macOS (Homebrew)
+brew install gum
+
+# Go
+go install github.com/charmbracelet/gum@latest
+```
+
 ## All-in-One Export/Import
 
 ### `export-all.sh`
 
-Export brew, flatpak, and steam to `~/Documents/puma-backup/`. Runs the individual export scripts and collects all output files into a single directory you can copy to a new machine.
+Export brew, flatpak, and steam to `~/Documents/puma-backup/`. With gum, you can select which subsystems to export interactively.
 
 ```bash
 ./export-all.sh
@@ -14,7 +47,7 @@ Export brew, flatpak, and steam to `~/Documents/puma-backup/`. Runs the individu
 
 ### `import-all.sh`
 
-Import brew, flatpak, and steam from `~/Documents/puma-backup/` (or a custom path). Installs desktop entries/icons for Steam and uses SteamCMD to download games (prompts for credentials).
+Import brew, flatpak, and steam from `~/Documents/puma-backup/` (or a custom path). With gum, you can select which subsystems to import.
 
 ```bash
 ./import-all.sh                          # uses ~/Documents/puma-backup/
@@ -25,9 +58,7 @@ Import brew, flatpak, and steam from `~/Documents/puma-backup/` (or a custom pat
 
 ### `puma-steam-export.sh`
 
-Export installed Steam game AppIDs to `~/Documents/steam-games-list.txt`.
-
-Auto-detects flatpak or native Steam installations.
+Export installed Steam game AppIDs to `~/Documents/steam-games-list.txt`. Displays results in a formatted table with gum.
 
 ```bash
 ./puma-steam-export.sh
@@ -35,7 +66,7 @@ Auto-detects flatpak or native Steam installations.
 
 ### `puma-steam-import-list.sh`
 
-Install Steam games from an exported AppID list using SteamCMD. Prompts for Steam credentials.
+Install Steam games from an exported AppID list using SteamCMD. With gum, you can select which games to install and enter credentials via styled password input.
 
 ```bash
 ./puma-steam-import-list.sh
@@ -43,7 +74,7 @@ Install Steam games from an exported AppID list using SteamCMD. Prompts for Stea
 
 ### `puma-steam-import.sh`
 
-Import Steam game desktop entries and icons into `~/.local/share/`. For flatpak Steam, copies and rewrites desktop files to use the flatpak command. For native Steam, exits early since integration is automatic.
+Import Steam game desktop entries and icons into `~/.local/share/`. For flatpak Steam, copies and rewrites desktop files to use the flatpak command.
 
 ```bash
 ./puma-steam-import.sh
@@ -69,7 +100,7 @@ flatpak install -y < ~/Documents/flatpak-list.txt
 
 ### `puma-brew-export.sh`
 
-Export installed brew taps, formulae, and casks to `~/Documents/brew-list.txt`.
+Export installed brew taps, formulae, and casks to `~/Documents/brew-list.txt`. Displays counts in a formatted table with gum.
 
 ```bash
 ./puma-brew-export.sh
@@ -77,7 +108,7 @@ Export installed brew taps, formulae, and casks to `~/Documents/brew-list.txt`.
 
 ### `puma-brew-import.sh`
 
-Install brew taps, formulae, and casks from an exported list.
+Install brew taps, formulae, and casks from an exported list. With gum, you can select which packages to install.
 
 ```bash
 ./puma-brew-import.sh ~/Documents/brew-list.txt
@@ -87,15 +118,17 @@ Install brew taps, formulae, and casks from an exported list.
 
 ### `puma-webapp.sh`
 
-Create a Chromium flatpak PWA desktop entry with optional icon.
+Create a Chromium flatpak PWA desktop entry with optional icon. With gum, prompts for all fields interactively if no arguments are provided.
 
 ```bash
 ./puma-webapp.sh <name> <url> [icon-url]
+# or just:
+./puma-webapp.sh
 ```
 
 ### `puma-webapp-export.sh`
 
-Export all Chromium webapp desktop entries and icons to `~/Documents/webapps-export.tar.gz`.
+Export all Chromium webapp desktop entries and icons. With gum, you can select which webapps to export.
 
 ```bash
 ./puma-webapp-export.sh
@@ -103,7 +136,7 @@ Export all Chromium webapp desktop entries and icons to `~/Documents/webapps-exp
 
 ### `puma-webapp-import.sh`
 
-Import webapp desktop entries and icons from a tarball export.
+Import webapp desktop entries and icons from a tarball export. With gum, you can select which webapps to import.
 
 ```bash
 ./puma-webapp-import.sh ~/Documents/webapps-export.tar.gz
@@ -113,7 +146,7 @@ Import webapp desktop entries and icons from a tarball export.
 
 ### `puma-tui.sh`
 
-Create a desktop entry that launches a TUI app inside a terminal emulator. Auto-detects available terminals (kitty, alacritty, foot, wezterm, xterm, etc.).
+Create a desktop entry that launches a TUI app inside a terminal emulator. With gum, you can pick from available terminals, confirm creation, and see styled prompts.
 
 ```bash
 ./puma-tui.sh <name> <command>
@@ -121,7 +154,7 @@ Create a desktop entry that launches a TUI app inside a terminal emulator. Auto-
 
 ### `puma-tui-export.sh`
 
-Export all TUI app desktop entries and icons (identified by `Categories=ConsoleOnly;`) to `~/Documents/tui-apps-export.tar.gz`.
+Export TUI app desktop entries and icons. With gum, you can select which apps to export.
 
 ```bash
 ./puma-tui-export.sh
@@ -129,7 +162,7 @@ Export all TUI app desktop entries and icons (identified by `Categories=ConsoleO
 
 ### `puma-tui-import.sh`
 
-Import TUI app desktop entries and icons from a tarball export.
+Import TUI app desktop entries and icons from a tarball export. With gum, you can select which apps to import.
 
 ```bash
 ./puma-tui-import.sh ~/Documents/tui-apps-export.tar.gz
@@ -139,10 +172,40 @@ Import TUI app desktop entries and icons from a tarball export.
 
 ### `puma-yt-live.sh`
 
-Check if a YouTube channel is currently live. If so, copies the stream URL to the clipboard and opens it in mpv.
+Check if a YouTube channel is currently live. With gum, prompts for the channel handle if not provided, shows a spinner while checking, and asks for confirmation before opening in mpv.
 
 ```bash
 ./puma-yt-live.sh <username>
+# or just:
+./puma-yt-live.sh
 ```
 
 Requires: `yt-dlp`, `mpv`, and a clipboard tool (`wl-copy`, `xclip`, or `xsel`).
+
+## Interactive Menu
+
+### `puma.sh`
+
+Launch the central interactive menu. Provides a searchable, filterable TUI for accessing all Puma tools without remembering individual script names. Type to filter options instantly.
+
+```bash
+./puma.sh
+# or after install:
+puma.sh
+```
+
+## Shared Library
+
+### `puma-lib.sh`
+
+Internal helper library that provides gum wrapper functions with graceful fallback:
+
+- `puma_spin` — Animated spinner for long operations
+- `puma_confirm` — Yes/no confirmation prompts
+- `puma_input` — Styled text input (supports `--password`)
+- `puma_choose` — Interactive multi-select menus
+- `puma_style` — Colored/bold text formatting
+- `puma_table` — Formatted table output
+- `puma_format` — Markdown-style text rendering
+
+All functions work without gum installed, degrading to plain terminal behavior.

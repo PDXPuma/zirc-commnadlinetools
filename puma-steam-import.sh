@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # puma-steam-import.sh — Import Steam game desktop entries and icons
-# into ~/.local/share/applications and ~/.local/share/icons
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/puma-lib.sh"
 
 die() { echo "Error: $1" >&2; exit 1; }
 
-# Detect Steam installation type
 if flatpak list --columns=application 2>/dev/null | grep -q com.valvesoftware.Steam; then
     STEAM_TYPE="flatpak"
     STEAM_FLATPAK="$HOME/.var/app/com.valvesoftware.Steam"
@@ -23,11 +24,11 @@ fi
 DEST_APPS="$HOME/.local/share/applications"
 DEST_ICONS="$HOME/.local/share/icons/hicolor"
 
-echo "Detected Steam: $STEAM_TYPE"
+puma_style "Detected Steam: $STEAM_TYPE" --bold
 
 if [[ "$STEAM_TYPE" == "native" ]]; then
-    echo "Native Steam integrates desktop entries and icons automatically."
-    echo "No import needed. Exiting."
+    puma_style "Native Steam integrates desktop entries and icons automatically." --foreground cyan
+    puma_style "No import needed." --foreground green
     exit 0
 fi
 
@@ -40,31 +41,23 @@ mkdir -p "$DEST_APPS" "$DEST_ICONS"
 
 # --- Desktop files ---
 apps_copied=0
-apps_skipped=0
-
 shopt -s nullglob
 for src in "$SRC_APPS"/*.desktop; do
     name="$(basename "$src")"
     dest="$DEST_APPS/$name"
-
-    # Replace Exec=steam with Exec=flatpak run com.valvesoftware.Steam
-    sed "s|^Exec=steam |Exec=${FLATPAK_CMD} |" "$src" > "$dest"
+    puma_spin "Installing desktop: $name" -- sed "s|^Exec=steam |Exec=${FLATPAK_CMD} |" "$src" > "$dest"
     chmod +x "$dest"
-    echo "Installed desktop: $name"
     apps_copied=$((apps_copied + 1))
 done
 
-# --- Icons (preserve hicolor size/apps structure) ---
+# --- Icons ---
 icons_copied=0
-
 for size_dir in "$SRC_ICONS"/*/; do
     size="$(basename "$size_dir")"
     src_apps_dir="$size_dir/apps"
     [[ -d "$src_apps_dir" ]] || continue
-
     dest_apps_dir="$DEST_ICONS/$size/apps"
     mkdir -p "$dest_apps_dir"
-
     for icon in "$src_apps_dir"/*; do
         [[ -f "$icon" ]] || continue
         cp "$icon" "$dest_apps_dir/"
@@ -73,9 +66,9 @@ for size_dir in "$SRC_ICONS"/*/; do
 done
 
 echo ""
-echo "Done. $apps_copied desktop file(s) installed, $icons_copied icon(s) copied."
+puma_style "Done. $apps_copied desktop file(s) installed, $icons_copied icon(s) copied." --bold --foreground green
 
-# Refresh desktop database if available
 if command -v update-desktop-database >/dev/null 2>&1; then
-    update-desktop-database "$DEST_APPS" 2>/dev/null && echo "Desktop database updated."
+    puma_spin "Updating desktop database..." -- update-desktop-database "$DEST_APPS" 2>/dev/null && \
+        puma_style "Desktop database updated." --foreground green
 fi

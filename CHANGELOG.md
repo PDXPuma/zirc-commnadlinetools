@@ -2,6 +2,39 @@
 
 ## [Unreleased]
 
+### Added
+- `puma.sh` — Central interactive menu with `gum filter` for searchable command selection
+- `puma-lib.sh` — Shared helper library with gum wrappers and graceful fallback (`puma_spin`, `puma_confirm`, `puma_input`, `puma_choose`, `puma_style`, `puma_table`, `puma_format`, `puma_filter`)
+
+### Changed
+- `install.sh` — Overwrite confirmation, styled output, gum availability check
+- `export-all.sh` — Interactive subsystem selection with "Select All" option, styled output
+- `import-all.sh` — Interactive subsystem selection with "Select All" option, styled output
+- `puma-brew-export.sh` — Spinners per export phase, table output for counts
+- `puma-brew-import.sh` — Selective package installation with "Select All", spinners per package, styled results
+- `puma-flatpak-export.sh` — Spinner, styled summary
+- `puma-steam-export.sh` — Game names alongside AppIDs, table display, "Select All" for selective export
+- `puma-steam-import.sh` — Detection spinner, spinners per desktop file install
+- `puma-steam-import-list.sh` — `gum input --password` for credentials, "Select All" for game selection, spinners per install
+- `puma-tui.sh` — Terminal chooser via `gum choose`, confirmation prompt, styled prompts, stdin support for automation
+- `puma-tui-export.sh` — "Select All" for selective app export, archive spinner
+- `puma-tui-import.sh` — "Select All" for selective app import, extraction spinner
+- `puma-webapp.sh` — Interactive mode (no args required), confirmation prompt, styled prompts
+- `puma-webapp-export.sh` — "Select All" for selective app export, archive spinner
+- `puma-webapp-import.sh` — "Select All" for selective app import, extraction spinner
+- `puma-yt-live.sh` — Interactive handle input, spinner while checking, confirm before opening in mpv
+- `README.md` — Full documentation for gum features, install instructions, interactive menu
+
+### Fixed
+- `puma_spin` — Fixed `gum confirm` prompt flag (positional, not `--prompt`)
+- `puma_spin` — Fixed `bash -c` argument passing to preserve special characters in URLs
+- `puma_spin` — Removed infinite spinner when called without a command
+- `puma_table` — Replaced unreliable `gum table` with printf-based tabular output
+- `puma.sh` — Menu no longer crashes when called scripts exit non-zero
+- `puma.sh` — Fixed variable name bug in `run_create_webapp` (`$URL` → `$url`)
+
+## [Previous]
+
 ### Changed
 - `puma-steam-export.sh` — Auto-detects flatpak or native Steam installations
 - `puma-steam-import-list.sh` — Auto-detects flatpak or native Steam installations
