@@ -63,6 +63,23 @@ for name in "${chosen[@]}"; do
 done
 
 echo ""
+# Generate CSV
+{
+    echo "Name,URL"
+    for name in "${chosen[@]}"; do
+        for i in "${!desktop_names[@]}"; do
+            if [[ "${desktop_names[$i]}" == "$name" ]]; then
+                desktop="${desktop_paths[$i]}"
+                app_name="$(grep -oP '^Name=\K.*' "$desktop" 2>/dev/null || true)"
+                app_url="$(grep -oP '--app=\K[^ ]+' "$desktop" 2>/dev/null || true)"
+                echo "${app_name},${app_url}"
+                break
+            fi
+        done
+    done
+} > "$OUTPUT_DIR/webapps.csv"
+
+echo ""
 tarball="$HOME/Documents/webapps-export.tar.gz"
 puma_spin "Creating archive..." -- tar -czf "$tarball" -C "$OUTPUT_DIR" apps icons
 rm -rf "$OUTPUT_DIR"
